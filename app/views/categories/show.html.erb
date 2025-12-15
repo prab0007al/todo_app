@@ -32,53 +32,52 @@
   <!-- Add New Task Form -->
   <div class="card mb-4">
     <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="fa fa-plus"></i> Add New Task</h5>
+      <h5 class="mb-0"><i class="fa fa-plus"></i> Add New Task</h5>
     </div>
     <div class="card-body">
-        <%= form_for [@category, @todo] do |f| %>
+      <%= form_for [@category, @todo] do |f| %>
         <% if @todo.errors.any? %>
-            <div class="alert alert-danger">
+          <div class="alert alert-danger">
             <h6><%= pluralize(@todo.errors.count, "error") %> prevented this task from being saved:</h6>
             <ul class="mb-0">
-                <% @todo.errors.full_messages.each do |message| %>
+              <% @todo.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
-                <% end %>
+              <% end %>
             </ul>
-            </div>
+          </div>
         <% end %>
 
         <div class="form-group">
-            <%= f.label :title, "Task Title" %>
-            <%= f.text_field :title, class: "form-control", 
-                placeholder: "e.g., Buy groceries", required: true %>
+          <%= f.label :title, "Task Title" %>
+          <%= f.text_field :title, class: "form-control", 
+              placeholder: "e.g., Buy groceries", required: true %>
         </div>
 
         <div class="form-group">
-            <%= f.label :description, "Description (optional)" %>
-            <%= f.text_area :description, class: "form-control", rows: 3,
-                placeholder: "Add details about this task..." %>
+          <%= f.label :description, "Description (optional)" %>
+          <%= f.text_area :description, class: "form-control", rows: 3,
+              placeholder: "Add details about this task..." %>
         </div>
 
         <div class="form-row">
-            <div class="form-group col-md-6">
+          <div class="form-group col-md-6">
             <%= f.label :priority %>
             <%= f.select :priority, 
-                [['Low', 'low'], ['Medium', 'medium'], ['High', 'high']],
+                options_for_select([['Low', 'low'], ['Medium', 'medium'], ['High', 'high']]), 
                 { include_blank: 'Select priority' }, 
-                { class: "form-control" } %>
-            </div>
+                class: "form-control" %>
+          </div>
 
-            <div class="form-group col-md-6">
+          <div class="form-group col-md-6">
             <%= f.label :deadline, "Due Date (optional)" %>
             <%= f.date_field :deadline, class: "form-control" %>
-            </div>
+          </div>
         </div>
 
         <%= f.submit "Add Task", class: "btn btn-primary" %>
-        <% end %>
+      <% end %>
     </div>
   </div>
-
 
   <!-- Tasks List -->
   <div class="card">
@@ -107,21 +106,16 @@
                 </h5>
                 
                 <div class="d-flex align-items-center flex-wrap">
-                  <!-- Priority Badge -->
-                  <!-- Debug Priority -->
-                    <% if todo.priority.present? %>
-                    <span class="badge badge-<%= case todo.priority
+                  <!-- Priority Badge - FIXED -->
+                  <% if todo.priority %>
+                    <span class="badge badge-pill badge-<%= case todo.priority
                         when 'high' then 'danger'
                         when 'medium' then 'warning'
                         when 'low' then 'success'
-                        else 'secondary'
                         end %> mr-2">
-                        Priority: <%= todo.priority.capitalize %> (DB: <%= todo.read_attribute(:priority) %>)
+                      <%= todo.priority.titleize %>
                     </span>
-                    <% else %>
-                    <span class="badge badge-secondary mr-2">No Priority Set (DB value: <%= todo.read_attribute(:priority).inspect %>)</span>
-                    <% end %>
-
+                  <% end %>
                   
                   <!-- Deadline -->
                   <% if todo.deadline %>
