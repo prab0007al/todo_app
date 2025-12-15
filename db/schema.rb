@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20251214165619) do
+ActiveRecord::Schema.define(version: 20251215055821) do
 
   create_table "categories", force: :cascade do |t|
     t.string "title"
@@ -21,7 +21,7 @@ ActiveRecord::Schema.define(version: 20251214165619) do
   create_table "todos", force: :cascade do |t|
     t.string "title"
     t.text "description"
-    t.integer "priority"
+    t.string "priority"
     t.datetime "deadline"
     t.boolean "is_completed"
     t.integer "category_id"

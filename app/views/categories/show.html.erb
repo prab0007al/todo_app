@@ -1,2 +1,200 @@
-<h1>Categories#show</h1>
-<p>Find me in app/views/categories/show.html.erb</p>
+<div class="container">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <h1><i class="fa fa-list"></i> <%= @category.title %></h1>
+      <p class="text-muted">
+        <%= pluralize(@category.todos.count, 'task') %> 
+        <% if @category.todos.where(is_completed: true).any? %>
+          (<%= @category.todos.where(is_completed: true).count %> completed)
+        <% end %>
+      </p>
+    </div>
+    <div class="col-md-4 text-right">
+      <%= link_to "Edit List", edit_category_path(@category), class: "btn btn-warning" %>
+      <%= link_to "Back to Lists", root_path, class: "btn btn-secondary" %>
+    </div>
+  </div>
+
+  <% if notice %>
+    <div class="alert alert-success alert-dismissible fade show">
+      <%= notice %>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="alert alert-danger alert-dismissible fade show">
+      <%= alert %>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+  <% end %>
+
+  <!-- Add New Task Form -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fa fa-plus"></i> Add New Task</h5>
+    </div>
+    <div class="card-body">
+        <%= form_for [@category, @todo] do |f| %>
+        <% if @todo.errors.any? %>
+            <div class="alert alert-danger">
+            <h6><%= pluralize(@todo.errors.count, "error") %> prevented this task from being saved:</h6>
+            <ul class="mb-0">
+                <% @todo.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+                <% end %>
+            </ul>
+            </div>
+        <% end %>
+
+        <div class="form-group">
+            <%= f.label :title, "Task Title" %>
+            <%= f.text_field :title, class: "form-control", 
+                placeholder: "e.g., Buy groceries", required: true %>
+        </div>
+
+        <div class="form-group">
+            <%= f.label :description, "Description (optional)" %>
+            <%= f.text_area :description, class: "form-control", rows: 3,
+                placeholder: "Add details about this task..." %>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+            <%= f.label :priority %>
+            <%= f.select :priority, 
+                [['Low', 'low'], ['Medium', 'medium'], ['High', 'high']],
+                { include_blank: 'Select priority' }, 
+                { class: "form-control" } %>
+            </div>
+
+            <div class="form-group col-md-6">
+            <%= f.label :deadline, "Due Date (optional)" %>
+            <%= f.date_field :deadline, class: "form-control" %>
+            </div>
+        </div>
+
+        <%= f.submit "Add Task", class: "btn btn-primary" %>
+        <% end %>
+    </div>
+  </div>
+
+
+  <!-- Tasks List -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Tasks</h5>
+    </div>
+    <div class="list-group list-group-flush">
+      <% if @category.todos.any? %>
+        <% @category.todos.order(created_at: :desc).each do |todo| %>
+          <div class="list-group-item <%= 'list-group-item-light' if todo.is_completed %>" id="todo-<%= todo.id %>">
+            <div class="row align-items-center">
+              <!-- Checkbox Column -->
+              <div class="col-auto">
+                <%= form_for [@category, todo], html: { class: 'complete-form' } do |f| %>
+                  <%= f.check_box :is_completed, 
+                      onchange: "this.form.submit()",
+                      class: "form-check-input",
+                      style: "width: 20px; height: 20px; cursor: pointer;" %>
+                <% end %>
+              </div>
+
+              <!-- Task Content Column -->
+              <div class="col">
+                <h5 class="mb-1 <%= 'text-muted' if todo.is_completed %>" style="<%= 'text-decoration: line-through;' if todo.is_completed %>">
+                  <%= todo.title %>
+                </h5>
+                
+                <div class="d-flex align-items-center flex-wrap">
+                  <!-- Priority Badge -->
+                  <!-- Debug Priority -->
+                    <% if todo.priority.present? %>
+                    <span class="badge badge-<%= case todo.priority
+                        when 'high' then 'danger'
+                        when 'medium' then 'warning'
+                        when 'low' then 'success'
+                        else 'secondary'
+                        end %> mr-2">
+                        Priority: <%= todo.priority.capitalize %> (DB: <%= todo.read_attribute(:priority) %>)
+                    </span>
+                    <% else %>
+                    <span class="badge badge-secondary mr-2">No Priority Set (DB value: <%= todo.read_attribute(:priority).inspect %>)</span>
+                    <% end %>
+
+                  
+                  <!-- Deadline -->
+                  <% if todo.deadline %>
+                    <small class="text-muted mr-3">
+                      <strong>Due:</strong> <%= todo.deadline.strftime("%b %d, %Y") %>
+                      <% if todo.deadline < Date.today && !todo.is_completed %>
+                        <span class="badge badge-danger ml-1">Overdue!</span>
+                      <% end %>
+                    </small>
+                  <% end %>
+                  
+                  <!-- Time ago -->
+                  <small class="text-muted mr-3">
+                    <%= time_ago_in_words(todo.created_at) %> ago
+                  </small>
+                  
+                  <!-- Description Toggle -->
+                  <% if todo.description.present? %>
+                    <button class="btn btn-sm btn-outline-info" type="button" 
+                            data-toggle="collapse" 
+                            data-target="#desc-<%= todo.id %>" 
+                            aria-expanded="false">
+                      <i class="fa fa-info-circle"></i> Details
+                    </button>
+                  <% end %>
+                </div>
+                
+                <!-- Collapsible Description -->
+                <% if todo.description.present? %>
+                  <div class="collapse mt-2" id="desc-<%= todo.id %>">
+                    <div class="card card-body bg-light">
+                      <small><strong>Description:</strong></small>
+                      <p class="mb-0"><%= simple_format(todo.description) %></p>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <!-- Actions Column -->
+              <div class="col-auto">
+                <%= link_to "Delete", category_todo_path(@category, todo), 
+                    method: :delete, 
+                    data: { confirm: "Delete '#{todo.title}'?" }, 
+                    class: "btn btn-danger btn-sm" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="list-group-item text-center text-muted py-5">
+          <p class="mb-0">No tasks yet. Add your first task above!</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .list-group-item {
+    transition: background-color 0.3s ease;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f8f9fa !important;
+  }
+  
+  .complete-form {
+    display: inline;
+    margin: 0;
+  }
+  
+  .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+  }
+</style>
